@@ -1,0 +1,114 @@
+{
+  "name": "dsh-session-delete-local",
+  "version": "1.3.5",
+  "description": "Delete DeepSeek Harness sessions from Desktop and Web with a preview and explicit confirmation.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.18",
+    "dsh": "=0.2.1-rc.2",
+    "pnpm": ">=11 <12"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./client": "./dist/client.js",
+    "./icon": "./icon.svg",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "scripts",
+    "test",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE",
+    "tsconfig*.json",
+    "eslint.config.mjs",
+    ".prettierrc.json",
+    ".prettierignore",
+    ".editorconfig",
+    "pnpm-workspace.yaml",
+    "CONTRIBUTING.md",
+    "CLEANUP_SCOPE.md",
+    "docs/images"
+  ],
+  "scripts": {
+    "build": "node --experimental-strip-types scripts/build.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "test:integration": "node --expose-internals --experimental-strip-types test/harness.ts",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck",
+    "verify": "pnpm check && pnpm build && pnpm test",
+    "prepack": "pnpm verify",
+    "release": "node --experimental-strip-types scripts/release.ts"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-workspace",
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "22.20.5",
+    "@types/react": "18.3.31",
+    "esbuild": "0.28.2",
+    "eslint": "10.13.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "zod": "4.4.3"
+  },
+  "packageManager": "pnpm@11.5.0",
+  "imports": {
+    "#core": {
+      "types": "./src/host/core.ts",
+      "default": "./dist/host/core.js"
+    },
+    "#guards": {
+      "types": "./src/host/guards.ts",
+      "default": "./dist/host/guards.js"
+    },
+    "#paths": {
+      "types": "./src/host/paths.ts",
+      "default": "./dist/host/paths.js"
+    }
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public",
+    "tag": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lynn12866/dsh-session-delete.git"
+  },
+  "homepage": "https://github.com/lynn12866/dsh-session-delete#readme",
+  "bugs": {
+    "url": "https://github.com/lynn12866/dsh-session-delete/issues"
+  },
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "plugin",
+    "session",
+    "typescript"
+  ]
+}
