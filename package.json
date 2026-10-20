@@ -19,22 +19,13 @@
     "./locale/*.json": "./locale/*.json"
   },
   "files": [
-    "dist",
-    "src",
-    "scripts",
-    "test",
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
     "README.md",
     "LICENSE",
-    "tsconfig*.json",
-    "eslint.config.mjs",
-    ".prettierrc.json",
-    ".prettierignore",
-    ".editorconfig",
-    "pnpm-workspace.yaml",
-    "CONTRIBUTING.md",
     "CLEANUP_SCOPE.md",
     "docs/images"
   ],
@@ -78,15 +69,15 @@
   "packageManager": "pnpm@11.5.0",
   "imports": {
     "#core": {
-      "types": "./src/host/core.ts",
+      "types": "./dist/host/core.d.ts",
       "default": "./dist/host/core.js"
     },
     "#guards": {
-      "types": "./src/host/guards.ts",
+      "types": "./dist/host/guards.d.ts",
       "default": "./dist/host/guards.js"
     },
     "#paths": {
-      "types": "./src/host/paths.ts",
+      "types": "./dist/host/paths.d.ts",
       "default": "./dist/host/paths.js"
     }
   },

@@ -45,4 +45,6 @@ DSH_RUNTIME=/absolute/path/to/runtime TEST_COMPRESSION=zstd pnpm test:integratio
 
 `dist/`、`*.tgz`、`*.tsbuildinfo` 和 `coverage/` 由 `.gitignore` 排除；`dist/` 仍是 npm 分发所需内容，由 `package.json.files` 显式包含。
 
+npm 和 GitHub 安装包只包含编译后的 `.js`、`.d.ts`、插件配置、语言资源、图标、README、许可证和清理范围说明及其引用的图片。源码、测试、开发脚本、开发配置和 source map 不进入安装包；source map 仅保留在本地构建目录。发布前用 `pnpm release --dry-run` 检查文件清单。
+
 GitHub Actions 在 Windows、macOS、Linux 的 Node.js 22、24 检查全部通过后，执行 `pnpm pack` 并上传 `dsh-session-delete-local` 构建产物。下载后解压 ZIP，使用其中的 `.tgz` 安装；该流程不发布到 npm。
