@@ -67,7 +67,7 @@ export function fingerprint(snapshots: SessionSnapshot[]): string {
     )
     .digest('hex');
 }
-// 0.2.1-rc.2: dispose the loop's complete lifecycle effect, not merely its
+// 0.2.1-rc.2 / rc.3: dispose the loop's complete lifecycle effect, not merely its
 // registration scope. The latter leaves its writer and SessionStore entry live.
 export function lifecycleDisposer(agent: AgentLifecycle): Disposer {
   const disposables = agent.loopCtx?.fiber?._disposables;

@@ -66,7 +66,7 @@ export class SessionDeletion {
       !workspaces.sessionPaths?.delete ||
       !cache.table?.delete
     ) {
-      refuse('unsupported', '仅支持 DeepSeek Harness 0.2.1-rc.2 的内置 JSONL 存储。');
+      refuse('unsupported', '仅支持 DeepSeek Harness 0.2.1-rc.2 / rc.3 的内置 JSONL 存储。');
     }
     return persistence;
   }

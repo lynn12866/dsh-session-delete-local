@@ -9,7 +9,7 @@ import type { HostContext, StorageBackend, StorageDomain } from '../src/host/con
 import type { TestContext } from './runtime.ts';
 if (!process.env.DSH_RUNTIME) {
   throw new Error(
-    'Set DSH_RUNTIME to the 0.2.1-rc.2 runtime directory containing package.json and node_modules.',
+    'Set DSH_RUNTIME to a supported Harness runtime directory containing package.json and node_modules.',
   );
 }
 const runtimeRequire = createRequire(join(resolve(process.env.DSH_RUNTIME), 'package.json'));
@@ -33,6 +33,32 @@ registerHooks({
 });
 const load = <Module = Record<string, unknown>>(name: string): Promise<Module> =>
   import(pathToFileURL(runtimeRequire.resolve('@deepseek-ai/' + name)).href) as Promise<Module>;
+const { evaluatePluginCompatibility } = await load<{
+  evaluatePluginCompatibility?: (
+    manifest: unknown,
+    exemptions?: Record<string, string[]>,
+    runtimeVersion?: string,
+  ) => { requirements: Record<string, string> } | undefined;
+}>('dsh-app-boot');
+// ctx.plugin bypasses the profile's compatibility gate. Exercise that gate too,
+// otherwise storage tests pass even when the app refuses to load this package.
+if (evaluatePluginCompatibility) {
+  const manifest: unknown = JSON.parse(
+    await readFile(new URL('../package.json', import.meta.url), 'utf8'),
+  );
+  assert.equal(
+    evaluatePluginCompatibility(manifest),
+    undefined,
+    'The plugin manifest must allow the runtime under test.',
+  );
+  for (const version of ['0.2.1-rc.2', '0.2.1-rc.3']) {
+    assert.equal(evaluatePluginCompatibility(manifest, {}, version), undefined);
+  }
+  for (const version of ['0.2.1-rc.1', '0.2.1-rc.4', '0.2.1', '0.3.0']) {
+    assert.ok(evaluatePluginCompatibility(manifest, {}, version)?.requirements['engines.dsh']);
+  }
+  console.log('PASS: runtime admission, supported versions, unverified version refusal');
+}
 const { Context } = await load<{ Context: new () => TestContext }>('cordis');
 const { default: SessionStore } = await load('dsh-session');
 const { default: Storage } = await load('dsh-storage');

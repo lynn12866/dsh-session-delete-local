@@ -1,6 +1,6 @@
 # DeepSeek Harness 会话删除插件
 
-![DeepSeek Harness](https://img.shields.io/badge/DeepSeek_Harness-0.2.1--rc.2-4D6BFE)
+![DeepSeek Harness](https://img.shields.io/badge/DeepSeek_Harness-0.2.1--rc.2%20%7C%20rc.3-4D6BFE)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)
 ![pnpm](https://img.shields.io/badge/pnpm-11.5-F69220?logo=pnpm&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.18-339933?logo=nodedotjs&logoColor=white)
@@ -18,7 +18,7 @@
 
 ## 安装
 
-仅适配 **DeepSeek Harness 0.2.1-rc.2**，支持从 npm 安装或下载安装包。
+适配 **DeepSeek Harness 0.2.1-rc.2 / rc.3**，支持从 npm 安装或下载安装包。rc.3 会拒绝加载仅声明兼容 rc.2 的旧插件；请更新至 **1.3.7** 或更高兼容版本。
 
 ### 从 npm 安装
 
@@ -34,14 +34,12 @@ dsh plugin --profile web add dsh-session-delete-local
 
 在 [GitHub Actions 的 Verify 构建](https://github.com/lynn12866/dsh-session-delete/actions/workflows/verify.yml)中，打开最新成功的构建，下载 **Artifacts → dsh-session-delete-local**（需登录 GitHub）。解压下载的 ZIP，得到 `.tgz` 安装包；仅在 Windows、macOS、Linux 的 Node.js 22、24 检查全部通过后生成。
 
-也可直接下载 npm 已发布的 [1.3.5 安装包](https://registry.npmjs.org/dsh-session-delete-local/-/dsh-session-delete-local-1.3.5.tgz)。
-
 ```sh
 # 桌面版：替换为下载文件的绝对路径和实际版本
-dsh plugin --profile desktop add file:/absolute/path/dsh-session-delete-local-1.3.5.tgz
+dsh plugin --profile desktop add file:/absolute/path/dsh-session-delete-local-1.3.7.tgz
 
 # Web 版：将安装包放到服务端，在服务端执行
-dsh plugin --profile web add file:/absolute/path/dsh-session-delete-local-1.3.5.tgz
+dsh plugin --profile web add file:/absolute/path/dsh-session-delete-local-1.3.7.tgz
 ```
 
 安装或更新后重启应用 / Web 服务。

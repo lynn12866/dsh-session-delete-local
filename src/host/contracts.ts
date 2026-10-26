@@ -1,5 +1,5 @@
 /**
- * Narrow adapter contracts for Harness 0.2.1-rc.2. These internal members are
+ * Narrow adapter contracts for Harness 0.2.1-rc.2 and rc.3. These internal members are
  * intentionally version-pinned; the runtime guard rejects other backends.
  */
 export type Awaitable<T> = T | Promise<T>;

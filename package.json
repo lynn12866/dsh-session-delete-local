@@ -1,12 +1,12 @@
 {
   "name": "dsh-session-delete-local",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "Delete DeepSeek Harness sessions from Desktop and Web with a preview and explicit confirmation.",
   "type": "module",
   "license": "MIT",
   "engines": {
     "node": ">=22.18",
-    "dsh": "=0.2.1-rc.2",
+    "dsh": "=0.2.1-rc.2 || =0.2.1-rc.3",
     "pnpm": ">=11 <12"
   },
   "exports": {

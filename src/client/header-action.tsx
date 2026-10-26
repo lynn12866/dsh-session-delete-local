@@ -11,7 +11,7 @@ function hasNativeClass(element: Element, suffix: string): boolean {
 }
 
 function findHeaderTarget(): HeaderTarget | null {
-  // Harness 0.2.1-rc.2 has no header-action slot. Match its native workspace
+  // Harness 0.2.1-rc.2 / rc.3 has no header-action slot. Match its native workspace
   // structure without localized text or a generated CSS hash, and reuse its class.
   for (const header of document.querySelectorAll<HTMLElement>('[class*="_sectionHeader"]')) {
     if (![...header.children].some((child) => hasNativeClass(child, 'sectionLabel'))) {
