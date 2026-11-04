@@ -32,11 +32,19 @@ pnpm format
 pnpm verify
 ```
 
-涉及宿主兼容声明、删除、归档或存储逻辑时，再执行普通日志与 Zstandard 集成测试。测试仅使用隔离临时会话，`DSH_RUNTIME` 指向受支持版本（0.2.1-rc.2 / rc.3）运行时中包含 `node_modules` 的目录；rc.3 同时验证宿主版本准入检查：
+涉及宿主兼容声明、删除、归档或存储逻辑时，再执行普通日志与 Zstandard 集成测试。测试仅使用隔离临时会话，`DSH_RUNTIME` 指向受支持版本（0.2.1-rc.2 / rc.3 / rc.5）运行时中包含 `node_modules` 的目录；rc.3 / rc.5 同时验证宿主版本准入检查，未验证的版本继续拒绝加载：
 
 ```sh
 DSH_RUNTIME=/absolute/path/to/runtime pnpm test:integration
 DSH_RUNTIME=/absolute/path/to/runtime TEST_COMPRESSION=zstd pnpm test:integration
+```
+
+macOS 桌面版的运行时位于 `app.asar/dsh`，须使用随应用附带、支持 ASAR 的 Electron 执行测试（Zstandard 测试额外设置 `TEST_COMPRESSION=zstd`）：
+
+```sh
+DSH_RUNTIME='/Applications/DeepSeek Harness.app/Contents/Resources/app.asar/dsh' \
+  ELECTRON_RUN_AS_NODE=1 '/Applications/DeepSeek Harness.app/Contents/MacOS/DeepSeek Harness' \
+  --expose-internals --experimental-strip-types test/harness.ts
 ```
 
 ## 发布

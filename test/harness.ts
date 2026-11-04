@@ -51,10 +51,10 @@ if (evaluatePluginCompatibility) {
     undefined,
     'The plugin manifest must allow the runtime under test.',
   );
-  for (const version of ['0.2.1-rc.2', '0.2.1-rc.3']) {
+  for (const version of ['0.2.1-rc.2', '0.2.1-rc.3', '0.2.1-rc.5']) {
     assert.equal(evaluatePluginCompatibility(manifest, {}, version), undefined);
   }
-  for (const version of ['0.2.1-rc.1', '0.2.1-rc.4', '0.2.1', '0.3.0']) {
+  for (const version of ['0.2.1-rc.1', '0.2.1-rc.4', '0.2.1-rc.6', '0.2.1', '0.3.0']) {
     assert.ok(evaluatePluginCompatibility(manifest, {}, version)?.requirements['engines.dsh']);
   }
   console.log('PASS: runtime admission, supported versions, unverified version refusal');
