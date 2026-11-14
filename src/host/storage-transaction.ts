@@ -1,12 +1,45 @@
 import { copyFile, mkdir, open, readFile, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import type { DeletionJournal, HostContext } from './contracts.js';
+import type { DeletionJournal, HostContext, ScheduleService } from './contracts.js';
 import type { JsonPatch, StoragePlan } from './storage-plan.js';
 import { artifactStageRoot, jsonObject } from './storage-plan.js';
 import { checkedPath, fileExists, movePath, purgePath } from './paths.js';
 import { durableJson } from './journal.js';
 import { refuse } from './errors.js';
+
+/**
+ * The Host's Schedule service, required whenever a reminder row is deleted.
+ *
+ * `edit({ action: 'delete' })` is the documented Host-wide deletion in
+ * 0.2.2-rc.3 and still takes the queue in 0.2.1; the storage write itself stays
+ * in this transaction so a failed commit can restore the exact row, which the
+ * Host API does not offer. A missing service is refused rather than deleting a
+ * reminder row behind the Host's back.
+ */
+function requireSchedule(ctx: HostContext): ScheduleService {
+  const schedule = ctx.get('schedule');
+  if (!schedule) {
+    refuse('unsupported-storage', '提醒服务不可用，已拒绝修改提醒记录。');
+  }
+  return schedule;
+}
+
+/**
+ * Whether the Host still holds the reminder row this preview approved.
+ *
+ * `view` flattens the task into one entry (`{ ...record, involvedSessionIds, status }`)
+ * and returns `{ code: 'schedule_not_found' }` for a miss, so the stored record is
+ * compared by its every field rather than by object identity or field order.
+ */
+function sameScheduleRecord(viewed: unknown, stored: unknown): boolean {
+  if (!jsonObject(viewed) || !jsonObject(stored)) {
+    return false;
+  }
+  return Object.entries(stored).every(
+    ([field, value]) => JSON.stringify(viewed[field]) === JSON.stringify(value),
+  );
+}
 
 export async function atomicText(file: string, text: string): Promise<void> {
   const temporary = join(dirname(file), `.${randomUUID()}.session-delete.tmp`);
@@ -128,23 +161,25 @@ export class StorageTransaction {
         this.removed.add(`${record.domain}/${record.table}/${record.key}`);
         continue;
       }
-      const schedule = record.domain === 'schedule' ? this.ctx.get('schedule') : undefined;
       const table = this.ctx.storageDomain.get(record.domain)!.table(record.table);
-      const remove = async () => {
-        if (
-          record.domain === 'schedule' &&
-          JSON.stringify(table.get(record.key)) !== JSON.stringify(record.value)
-        ) {
+      if (record.domain === 'schedule') {
+        // Delete through the Host's own queue so it rechecks the row and re-arms its
+        // timer; this transaction keeps the recorded value to restore on failure.
+        const schedule = requireSchedule(this.ctx);
+        const viewed = await schedule.view({ id: record.key });
+        const stored = jsonObject(record.value) ? record.value.record : undefined;
+        if (stored === undefined || !sameScheduleRecord(viewed, stored)) {
+          refuse('changed', '提醒记录已被修改，请重新预览。');
+        }
+        const result = await schedule.edit({ id: record.key, action: 'delete' });
+        if (result.deleted !== true) {
           refuse('changed', '提醒记录发生变化，请重新预览。');
         }
-        return await table.delete(record.key);
-      };
-      const result = schedule ? await schedule.serialize(remove) : await remove();
-      if (result !== false) {
         this.removed.add(`${record.domain}/${record.table}/${record.key}`);
-        schedule?.emitChanged();
-        schedule?.runtime?.requestDrive();
+        continue;
       }
+      await table.delete(record.key);
+      this.removed.add(`${record.domain}/${record.table}/${record.key}`);
     }
   }
 
@@ -191,14 +226,7 @@ export class StorageTransaction {
             .table(record.table)
             .put(record.key, record.value);
         };
-        const schedule = record.domain === 'schedule' ? this.ctx.get('schedule') : undefined;
-        if (schedule) {
-          await schedule.serialize(restore);
-          schedule.emitChanged();
-          schedule.runtime?.requestDrive();
-        } else {
-          await restore();
-        }
+        await restore();
       } catch (error) {
         errors.push(String(error));
       }

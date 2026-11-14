@@ -1,6 +1,7 @@
 /**
- * Narrow adapter contracts for Harness 0.2.1-rc.2, rc.3 and rc.5. These internal members are
- * intentionally version-pinned; the runtime guard rejects other backends.
+ * Narrow adapter contracts for Harness 0.2.1-rc.2 / rc.3 / rc.5 and 0.2.2-rc.3.
+ * These internal members are intentionally version-pinned; the runtime guard
+ * rejects other backends.
  */
 export type Awaitable<T> = T | Promise<T>;
 export type Disposer = () => Awaitable<void>;
@@ -8,6 +9,8 @@ export type Disposer = () => Awaitable<void>;
 export interface SessionHeader {
   id: string;
   parentSession?: string;
+  /** Subagent classification; ordinary forks omit it since 0.2.1-rc.3. */
+  origin?: 'subagent';
   [field: string]: unknown;
 }
 
@@ -166,7 +169,13 @@ export interface StorageBackend {
 }
 
 export interface ScheduleService {
-  delete(request: { sessionId: string; id: string }): Promise<{ deleted: boolean }>;
+  /** The id-addressed management API introduced for Host-wide task editing. */
+  edit(request: {
+    id: string;
+    action: 'delete' | 'update';
+    patch?: Record<string, unknown>;
+  }): Promise<{ id: string; deleted?: boolean; code?: string }>;
+  view(request: { id: string }): unknown;
   serialize<T>(work: () => Promise<T>): Promise<T>;
   emitChanged(): void;
   runtime?: { requestDrive(): void };

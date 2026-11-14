@@ -11,9 +11,15 @@ function hasNativeClass(element: Element, suffix: string): boolean {
 }
 
 function findHeaderTarget(): HeaderTarget | null {
-  // Harness 0.2.1-rc.2 / rc.3 / rc.5 has no header-action slot. Match its native workspace
-  // structure without localized text or a generated CSS hash, and reuse its class.
-  for (const header of document.querySelectorAll<HTMLElement>('[class*="_sectionHeader"]')) {
+  // No verified generation has a header-action slot, so this mounts beside the native
+  // workspace-title actions instead. 0.2.2-rc.3 marks that row with
+  // `data-sidebar-workspace-header`; earlier releases only carry the generated classes,
+  // which stay matched as a fallback and never include a hash or localized text.
+  const headers = new Set<HTMLElement>([
+    ...document.querySelectorAll<HTMLElement>('[data-sidebar-workspace-header]'),
+    ...document.querySelectorAll<HTMLElement>('[class*="_sectionHeader"]'),
+  ]);
+  for (const header of headers) {
     if (![...header.children].some((child) => hasNativeClass(child, 'sectionLabel'))) {
       continue; // A collapsed sidebar has no workspace title row.
     }

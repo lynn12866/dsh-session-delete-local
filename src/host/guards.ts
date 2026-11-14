@@ -1,10 +1,22 @@
 import { lstat, realpath } from 'node:fs/promises';
 import { dirname, join, relative, resolve, isAbsolute } from 'node:path';
 import { createHash } from 'node:crypto';
-import type { AgentLifecycle, Disposer, SessionSnapshot } from './contracts.js';
+import type { AgentLifecycle, Disposer, SessionHeader, SessionSnapshot } from './contracts.js';
 import { refuse } from './errors.js';
 import { samePath } from './paths.js';
 
+/**
+ * Whether a Session is derived from its `parentSession`.
+ *
+ * Since 0.2.1-rc.3 an ordinary fork omits `parentSession` entirely, so a plain
+ * presence check still classifies subagents. A header that does carry one is
+ * treated as derived unless it is explicitly marked otherwise: verified logs
+ * before rc.3 wrote their fork source there, and overlooking a real child is
+ * the unsafe direction for a permanent deletion.
+ */
+function isDerived(header: SessionHeader): boolean {
+  return header.origin !== undefined ? header.origin === 'subagent' : true;
+}
 export function validId(id: unknown): string {
   if (
     typeof id !== 'string' ||
@@ -38,7 +50,12 @@ export function selectSessions(
   do {
     changed = false;
     for (const s of snapshots) {
-      if (s.header.parentSession && ids.has(s.header.parentSession) && !ids.has(s.header.id)) {
+      if (
+        s.header.parentSession &&
+        ids.has(s.header.parentSession) &&
+        !ids.has(s.header.id) &&
+        isDerived(s.header)
+      ) {
         ids.add(s.header.id);
         changed = true;
       }
@@ -67,8 +84,10 @@ export function fingerprint(snapshots: SessionSnapshot[]): string {
     )
     .digest('hex');
 }
-// 0.2.1-rc.2 / rc.3 / rc.5: dispose the loop's complete lifecycle effect, not merely its
-// registration scope. The latter leaves its writer and SessionStore entry live.
+// 0.2.1-rc.2 / rc.3 / rc.5 and 0.2.2-rc.3: dispose the loop's complete lifecycle effect,
+// not merely its registration scope. The latter leaves its writer and SessionStore entry
+// live. This reads Cordis internals (`fiber._disposables` and the `cordis.effect` label),
+// so a shape change must refuse rather than fall back to a partial disposal.
 export function lifecycleDisposer(agent: AgentLifecycle): Disposer {
   const disposables = agent.loopCtx?.fiber?._disposables;
   const matches = disposables

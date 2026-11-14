@@ -51,10 +51,19 @@ if (evaluatePluginCompatibility) {
     undefined,
     'The plugin manifest must allow the runtime under test.',
   );
-  for (const version of ['0.2.1-rc.2', '0.2.1-rc.3', '0.2.1-rc.5']) {
+  for (const version of ['0.2.1-rc.2', '0.2.1-rc.3', '0.2.1-rc.5', '0.2.2-rc.3']) {
     assert.equal(evaluatePluginCompatibility(manifest, {}, version), undefined);
   }
-  for (const version of ['0.2.1-rc.1', '0.2.1-rc.4', '0.2.1-rc.6', '0.2.1', '0.3.0']) {
+  for (const version of [
+    '0.2.1-rc.1',
+    '0.2.1-rc.4',
+    '0.2.1-rc.6',
+    '0.2.1',
+    '0.2.2-rc.1',
+    '0.2.2-rc.2',
+    '0.2.2',
+    '0.3.0',
+  ]) {
     assert.ok(evaluatePluginCompatibility(manifest, {}, version)?.requirements['engines.dsh']);
   }
   console.log('PASS: runtime admission, supported versions, unverified version refusal');
@@ -128,7 +137,7 @@ assert.ok(ctx.typert.local.get('sessionDelete/preview'));
 assert.ok(ctx.typert.local.get('sessionDelete/commit'));
 const headers = [
   { id: 'delete-root' },
-  { id: 'delete-child', parentSession: 'delete-root', origin: 'subagent' },
+  { id: 'delete-child', parentSession: 'delete-root', origin: 'subagent' as const },
   { id: 'keep' },
 ];
 for (const item of headers) {
@@ -217,7 +226,7 @@ assert.ok(!ctx.workspaceRegistry.archivedSessionIds.includes('rollback-fixture')
 // archived and visible descendants, while retaining unrelated archived rows.
 for (const item of [
   { id: 'archive-root' },
-  { id: 'archive-child', parentSession: 'archive-root', origin: 'subagent' },
+  { id: 'archive-child', parentSession: 'archive-root', origin: 'subagent' as const },
   { id: 'visible-child', parentSession: 'archive-root' },
   { id: 'archive-keep' },
   { id: 'archive-rollback' },
@@ -388,28 +397,14 @@ workspace.record = await workspaceTable.update(workspace.id, () => ({
   sessionIds: [...originalWorkspaceSessionIds, orphanId],
 }));
 
-const scheduleModule = await load<{
-  scheduleDomain: unknown;
-  createAtScheduleRecord(
-    id: string,
-    prompt: string,
-    at: string,
-    now: number,
-    title: string,
-  ): unknown;
-}>('dsh-schedule');
-const scheduleDomain: StorageDomain = await ctx.storageDomain.open(scheduleModule.scheduleDomain);
-await scheduleDomain.table('tasks').put('orphan-reminder', {
-  sessionId: orphanId,
-  status: 'inactive',
-  record: scheduleModule.createAtScheduleRecord(
-    'orphan-reminder',
-    'fixture prompt',
-    new Date(Date.now() + 60000).toISOString(),
-    Date.now(),
-    'Fixture',
-  ),
-});
+// A reminder row is removed through the Host's id-addressed `edit({ action: 'delete' })`
+// rather than by writing the schedule domain directly, so this composition mounts the
+// Host Schedule service. It is mounted before any Session exists: the service opens its
+// domain once, and rows written into that table afterwards are not visible to `view`.
+const { default: Schedule } = await load('dsh-schedule');
+await mount(Schedule);
+const scheduleDomain: StorageDomain = ctx.storageDomain.get('schedule')!;
+
 for (const file of [legacyCache, legacyFeedback]) {
   const document = JSON.parse(await readFile(file, 'utf8')) as {
     tables: { sessions: Record<string, unknown> };
@@ -417,6 +412,18 @@ for (const file of [legacyCache, legacyFeedback]) {
   document.tables.sessions[orphanId] = cacheRecord;
   await writeFile(file, JSON.stringify(document, null, 2) + '\n');
 }
+await scheduleDomain.table('tasks').put('orphan-reminder', {
+  record: {
+    id: 'orphan-reminder',
+    kind: 'at',
+    title: 'Fixture',
+    prompt: 'fixture prompt',
+    scheduledAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+  },
+  sessionId: orphanId,
+  involvedSessionIds: [],
+  status: 'inactive',
+});
 await projectionDomain.table('sessions').put('revived-fixture', cacheRecord);
 const beforeRevival = await logic.previewResidue();
 assert.ok(beforeRevival.ids.includes('revived-fixture'));

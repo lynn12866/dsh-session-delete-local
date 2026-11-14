@@ -1,6 +1,6 @@
 # DeepSeek Harness 会话删除插件
 
-![DeepSeek Harness](https://img.shields.io/badge/DeepSeek_Harness-0.2.1--rc.2%20%7C%20rc.3%20%7C%20rc.5-4D6BFE)
+![DeepSeek Harness](https://img.shields.io/badge/DeepSeek_Harness-0.2.1--rc.2%20%7C%20rc.3%20%7C%20rc.5%20%7C%200.2.2--rc.3-4D6BFE)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)
 ![pnpm](https://img.shields.io/badge/pnpm-11.5-F69220?logo=pnpm&logoColor=white)
 ![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.18-339933?logo=nodedotjs&logoColor=white)
@@ -18,7 +18,7 @@
 
 ## 安装
 
-适配 **DeepSeek Harness 0.2.1-rc.2 / rc.3 / rc.5**，支持从 npm 安装或下载安装包。rc.5 会拒绝加载仅声明兼容 rc.2 / rc.3 的旧插件；请更新至 **1.3.8** 或更高兼容版本。
+适配 **DeepSeek Harness 0.2.1-rc.2 / rc.3 / rc.5 与 0.2.2-rc.3**，支持从 npm 安装或下载安装包。宿主会拒绝加载未声明兼容当前版本的插件；升级 Harness 后若插件失效，请先确认本条已包含该版本。
 
 ### 从 npm 安装
 
